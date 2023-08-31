@@ -2,23 +2,58 @@
 % Please edit documentation in R/preprocess.R
 \name{add_duration}
 \alias{add_duration}
-\title{Add time spent in seconds on webpage}
+\title{Add time spent on a visit in seconds}
 \usage{
-add_duration(wt, reset = 3600)
+add_duration(
+  wt,
+  cutoff = 300,
+  replace_by = NA,
+  last_replace_by = NA,
+  device_switch_na = FALSE,
+  device_var = NULL
+)
 }
 \arguments{
-\item{wt}{webtrack data object}
+\item{wt}{webtrack data object.}
 
-\item{reset}{numeric. If duration is greater than this value, it is reset to zero, assuming a new browsing session has started}
+\item{cutoff}{numeric (seconds). If duration is greater than this value,
+it is reset to the value defined by \code{replace_by}. Defaults to 300 seconds.}
+
+\item{replace_by}{numeric. Determines whether differences greater than
+the cutoff are set to \code{NA}, or some value. Defaults to \code{NA}.}
+
+\item{last_replace_by}{numeric. Determines whether the last visit
+for an individual is set to \code{NA}, or some value. Defaults to \code{NA}.}
+
+\item{device_switch_na}{boolean. Relevant only when data was collected
+from multiple devices. When visits are ordered by timestamp sequence,
+two consecutive visits can come from different devices, which makes the
+timestamp difference less likely to be the true duration. It may be
+preferable to set the duration of the visit to \code{NA} (\code{TRUE}) rather than
+the difference to the next timestamp (\code{FALSE}). Defaults to \code{FALSE}.}
+
+\item{device_var}{character. Column indicating device.
+Required if 'device_switch_na' set to \code{TRUE}. Defaults to \code{NULL}.}
 }
 \value{
-webtrack data.table with the same columns as wt and a new column called duration
+webtrack data.table (ordered by panelist_id and timestamp) with
+the same columns as wt and a new column called \code{duration}.
 }
 \description{
-Derive the time spend on a website from the timestamps
+\code{add_duration()} approximates the time spent on a visit based on the difference
+between two consecutive timestamps, replacing differences exceeding \code{cutoff} with
+the value defined in \code{replace_by}.
 }
 \examples{
-data("test_data")
-wt <- as.wt_dt(test_data)
+\dontrun{
+data("testdt_tracking")
+wt <- as.wt_dt(testdt_tracking)
 wt <- add_duration(wt)
+# Defining cutoff at 10 minutes, replacing those exceeding cutoff to 5 minutes,
+# and setting duration before device switch to `NA`:
+wt <- add_duration(wt,
+  cutoff = 600, replace_by = 300,
+  device_switch_na = TRUE, device_var = "device"
+)
+}
 }

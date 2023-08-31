@@ -1,26 +1,39 @@
-#' Create incidence matrix for audience-outlet network
-#' @details The incidence matrix is a matrix A with entries  `A[i,j]=1` if panelist i visited outlet j at least once.
-#' @param wt webtrack data object
-#' @param cutoff visits below this cutoff will not be considered as a visit
-#' @return incidence audience-outlet network
-#' @seealso to create audience networks see [audience_network]
+#' Create incidence matrix for two-mode networks including audiences
+#' @description
+#' `audience_incidence()` created an incidence matrix, which is a matrix A
+#' with entries `A[i,j]=1` if panelist `i` visited web site `j` at least once.
+#' Web site can be defined, for example, by the URL's domain, or its host.
+#' @param wt webtrack data object.
+#' @param mode2 character. Name of column that includes the second mode (e.g.,
+#' `domain` or `host`)
+#' @param cutoff visits below this cutoff will not be considered as a visit.
+#' @return Incidence matrix of a two-mode network
+#' @seealso To create audience networks see [audience_network].
 #' @examples
-#' data("test_data")
-#' wt <- as.wt_dt(test_data)
+#' \dontrun{
+#' data("testdt_tracking")
+#' wt <- as.wt_dt(testdt_tracking)
 #' wt <- add_duration(wt)
-#' wt <- extract_domain(wt)
-#' audience_incidence(wt)
+#' wt <- suppressWarnings(extract_domain(wt))
+#' # create incidence matrix using domains as second mode
+#' incidence <- audience_incidence(wt)
+#' # create incidence matrix using hosts as second mode
+#' wt <- suppressWarnings(extract_host(wt))
+#' incidence <- audience_incidence(wt, mode2 = "host")
+#' }
 #' @export
-audience_incidence <- function(wt,cutoff = 3){
-  .N = 0 #revisit
-  if(!requireNamespace("igraph", quietly = TRUE)){
+audience_incidence <- function(wt, mode2 = "domain", cutoff = 3) {
+  # .N = 0 #revisit
+  if (!requireNamespace("igraph", quietly = TRUE)) {
     stop("The package 'igraph' is needed for this function.")
   }
   stopifnot("wt is not an wt_dt object" = is.wt_dt(wt))
-  vars_exist(wt,vars = c("panelist_id","domain"))
+  vars_exist(wt, vars = c("panelist_id", mode2))
 
-  el <- wt[duration >= cutoff, c("panelist_id", "domain")]
-  el <- el[, .N, by = c("panelist_id", "domain")]
+  el <- wt[duration >= cutoff]
+  el <- el[, c("panelist_id", mode2), with = FALSE]
+  el <- el[, .N, by = c("panelist_id", mode2)]
+  # el <- el[!is.na(domain)]
   g <- igraph::graph_from_data_frame(el, directed = FALSE)
   igraph::V(g)$type <- !igraph::bipartite.mapping(g)$type
   A <- igraph::as_incidence_matrix(g)
@@ -30,29 +43,32 @@ audience_incidence <- function(wt,cutoff = 3){
 #' Create audience networks
 #' @description audience network
 #' @param wt webtrack data object
+#' @param mode2 character. name of column that includes the second mode (e.g.
+#' 'domain' or 'host')
 #' @param cutoff visits below this cutoff will not be considered as a visit
 #' @param type one of "pmi", "phi", "disparity", "sdsm, "or "fdsm".
 #' @param alpha significance level
 #' @return audience network as igraph object
 #' @examples
-#' data("test_data")
-#' wt <- as.wt_dt(test_data)
+#' \dontrun{
+#' data("testdt_tracking")
+#' wt <- as.wt_dt(testdt_tracking)
 #' wt <- add_duration(wt)
-#' wt <- extract_domain(wt)
-#' audience_network(wt, type = "pmi", cutoff = 120)
+#' wt <- suppressWarnings(extract_domain(wt))
+#' network <- audience_network(wt, type = "pmi", cutoff = 120)
+#' }
 #' @export
-audience_network <- function(wt, cutoff = 3, type = "pmi", alpha = 0.05){
-  A <- audience_incidence(wt, cutoff = cutoff)
-  type <- match.arg(type,c("pmi", "phi", "disparity", "sdsm", "fdsm"))
+audience_network <- function(wt, mode2 = "domain", cutoff = 3, type = "pmi", alpha = 0.05) {
+  A <- audience_incidence(wt, mode2 = mode2, cutoff = cutoff)
+  type <- match.arg(type, c("pmi", "phi", "disparity", "sdsm", "fdsm"))
 
   switch(type,
-         pmi = pmi(A,t = alpha),
-         phi = phi(A,p = alpha),
-         disparity = disparity1(A, p = alpha),
-         sdsm = sdsm1(A, p = alpha),
-         fdsm = fdsm1(A, p = alpha)
+    pmi = pmi(A, t = alpha),
+    phi = phi(A, p = alpha),
+    disparity = disparity1(A, p = alpha),
+    sdsm = sdsm1(A, p = alpha),
+    fdsm = fdsm1(A, p = alpha)
   )
-
 }
 
 # network extraction methods ----
@@ -65,7 +81,7 @@ pmi <- function(A, t = 0) {
 }
 
 phi <- function(A, p = 0.05) {
-  if(!requireNamespace("stats", quietly = TRUE)){
+  if (!requireNamespace("stats", quietly = TRUE)) {
     stop("The package 'stats' is needed for this function.")
   }
   D <- (A %*% t(A))
@@ -86,14 +102,14 @@ disparity1 <- function(A, p = 0.05) {
 }
 
 sdsm1 <- function(A, p = 0.05) {
-  if(!requireNamespace("backbone", quietly = TRUE)){
+  if (!requireNamespace("backbone", quietly = TRUE)) {
     stop("The package 'backbone' is needed for this function.")
   }
   suppressMessages(backbone::sdsm(A, class = "igraph", alpha = p))
 }
 
 fdsm1 <- function(A, p = 0.05) {
-  if(!requireNamespace("backbone", quietly = TRUE)){
+  if (!requireNamespace("backbone", quietly = TRUE)) {
     stop("The package 'backbone' is needed for this function.")
   }
   suppressMessages(backbone::sdsm(A, class = "igraph", alpha = p))

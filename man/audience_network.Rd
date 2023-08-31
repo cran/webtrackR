@@ -4,10 +4,13 @@
 \alias{audience_network}
 \title{Create audience networks}
 \usage{
-audience_network(wt, cutoff = 3, type = "pmi", alpha = 0.05)
+audience_network(wt, mode2 = "domain", cutoff = 3, type = "pmi", alpha = 0.05)
 }
 \arguments{
 \item{wt}{webtrack data object}
+
+\item{mode2}{character. name of column that includes the second mode (e.g.
+'domain' or 'host')}
 
 \item{cutoff}{visits below this cutoff will not be considered as a visit}
 
@@ -22,9 +25,11 @@ audience network as igraph object
 audience network
 }
 \examples{
-data("test_data")
-wt <- as.wt_dt(test_data)
+\dontrun{
+data("testdt_tracking")
+wt <- as.wt_dt(testdt_tracking)
 wt <- add_duration(wt)
-wt <- extract_domain(wt)
-audience_network(wt, type = "pmi", cutoff = 120)
+wt <- suppressWarnings(extract_domain(wt))
+network <- audience_network(wt, type = "pmi", cutoff = 120)
+}
 }

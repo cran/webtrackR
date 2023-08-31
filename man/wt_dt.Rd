@@ -4,33 +4,46 @@
 \alias{wt_dt}
 \alias{as.wt_dt}
 \alias{is.wt_dt}
-\title{An S3 class, based on \link{data.table}, to store webtrack data}
+\title{An S3 class, based on \link{data.table}, to store web tracking data}
 \usage{
-as.wt_dt(x)
+as.wt_dt(
+  x,
+  timestamp_format = "\%Y-\%m-\%d \%H:\%M:\%OS",
+  varnames = c(panelist_id = "panelist_id", url = "url", timestamp = "timestamp")
+)
 
 is.wt_dt(x)
 }
 \arguments{
-\item{x}{\link{data.table} containing the correct set of variables (panelist_id,url and timestamp)}
+\item{x}{data.frame containing a necessary set of columns, namely
+panelist's ID, visit URL and visit timestamp.}
+
+\item{timestamp_format}{string. Specifies the raw timestamp's formatting.
+Defaults to \code{"\%Y-\%m-\%d \%H:\%M:\%OS"}.}
+
+\item{varnames}{Named vector of column names, which contain the panelist's ID
+(\code{panelist_id}), the visit's URL (\code{url}) and the visit's timestamp (\code{timestamp}).}
 }
 \value{
-a webtrack data object
+a webtrack data object with at least columns \code{panelist_id}, \code{url}
+and \code{timestamp}
 
 logical. TRUE if x is a webtrack data object and FALSE otherwise
 }
 \description{
-An S3 class, based on \link{data.table}, to store webtrack data
+An S3 class, based on \link{data.table}, to store web tracking data
+
+Convert a data.frame containing web tracking data to a \code{wt_dt} object
 }
 \details{
 A \code{wt_dt} table is a \link{data.table}.
 Therefore, it can be used by any function that would work on a \link{data.frame} or a \link{data.table}.
 Most of the operation such as variable creation, subsetting and joins are inherited from the \link{data.table}
 \verb{[]} operator, following the convention \code{DT[i,j,by]} (see data table package for detail).
-These operations are applied on the data.
 }
 \examples{
-data("test_data")
-wt <- as.wt_dt(test_data)
+data("testdt_tracking")
+wt <- as.wt_dt(testdt_tracking)
 is.wt_dt(wt)
 }
 \seealso{

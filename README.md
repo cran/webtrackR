@@ -7,15 +7,18 @@
 
 [![CRAN
 status](https://www.r-pkg.org/badges/version/webtrackR)](https://CRAN.R-project.org/package=webtrackR)
+[![CRAN
+Downloads](http://cranlogs.r-pkg.org/badges/webtrackR)](https://CRAN.R-project.org/package=webtrackR)
 [![R-CMD-check](https://github.com/schochastics/webtrackR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/schochastics/webtrackR/actions/workflows/R-CMD-check.yaml)
 [![Codecov test
 coverage](https://codecov.io/gh/schochastics/webtrackR/branch/main/graph/badge.svg)](https://app.codecov.io/gh/schochastics/webtrackR?branch=main)
 <!-- badges: end -->
 
-webtrackR is an R package to preprocess and analyse web tracking data in
-conjunction with survey data of panelists. The package is built on top
-of data.table and can thus comfortably handle very large web tracking
-datasets
+webtrackR is an R package to preprocess and analyze web tracking data,
+i.e., web browsing histories of participants in an academic study. Web
+tracking data is oftentimes collected and analyzed in conjunction with
+survey data of the same participants. The R package is built on top of
+data.table and can thus comfortably handle very large datasets.
 
 ## Installation
 
@@ -27,89 +30,134 @@ You can install the development version of webtrackR from
 devtools::install_github("schochastics/webtrackR")
 ```
 
-## S3 class
+The [CRAN](https://CRAN.R-project.org/package=webtrackR) version can be
+installed with:
 
-The package adds a S3 class called `wt_dt` which inherits most of the
-functionality from the data.table class A `summary` and `print` method
-are included in the package
+``` r
+install.packages("webtrackR")
+```
+
+## S3 class `wt_dt`
+
+The package defines an S3 class called `wt_dt` which inherits most of
+the functionality from the `data.table` class. A `summary` and `print`
+method are included in the package.
+
+Each row in a web tracking data set represents a visit. Raw data need to
+have at least the following variables:
+
+- `panelist_id`: the individual from which the data was collected
+- `url`: the URL of the visit
+- `timestamp`: the time of the URL visit
+
+The function `as.wt_dt` assigns the class `wt_dt` to a raw web tracking
+data set. It also allows you to specify the name of the raw variables
+corresponding to `panelist_id`, `url` and `timestamp`. Additionally, it
+turns the timestamp variable into `POSIXct` format.
+
+All preprocessing functions check if these three variables are present.
+Otherwise an error is thrown.
 
 ## Preprocessing
 
-raw web tracking data is assumed to have (at least) the following
-variables:
+Several other variables can be derived from the raw data with the
+following functions:
 
-- **panelist_id**: person who’s data is tracked
-- **url**: the website the person is visiting
-- **timestamp**: when the website was visited
+- `add_duration()` adds a variable called `duration` based on the
+  sequence of timestamps. The basic logic is that the duration of a
+  visit is set to the time difference to the subsequent visit, unless
+  this difference exceeds a certain value (defined by argument
+  `cutoff`), in which case the duration will be replaced by `NA` or some
+  user-defined value (defined by `replace_by`).
+- `add_session()` adds a variable called `session`, which groups
+  subsequent visits into a session until the difference to the next
+  visit exceeds a certain value (defined by `cutoff`).
+- `extract_host()`, `extract_domain()`, `extract_path()` extracts the
+  host, domain and path of the raw URL and adds variables named
+  accordingly. See function descriptions for definitions of these terms.
+  `drop_query()` lets you drop the query and fragment components of the
+  raw URL.
+- `add_next_visit()` and `add_previous_visit()` adds the previous or the
+  next URL, domain, or host (defined by `level`) as a new variable.
+- `add_referral()` adds a new variable indicating whether a visit was
+  referred by a social media platform. Follows the logic of Schmidt et
+  al., [(2023)](https://doi.org/10.31235/osf.io/cks68).
+- `add_title()` downloads the title of a website (the text within the
+  `<title>` tag of a web site’s `<head>`) and adds it as a new variable.
+- `add_panelist_data()`. Joins a data set containing information about
+  participants such as a survey.
 
-All preprocessing functions check if these are present. Otherwise an
-error is thrown.
+## Classification
 
-Several other variables can be derived from these with the package:
+- `classify_visits()` categorizes website visits by either extracting
+  the URL’s domain or host and matching them to a list of domains or
+  hosts, or by matching a list of regular expressions against the visit
+  URL.
 
-- **duration**: how much time was spend on a website (use
-  `add_duration()` and `aggregate_duration()` to summarize consecutive
-  visits to the same website)
-- **domain**: the toplevel domain of a URL (use `extract_domain()`)
-- **type** and **prev_type**: using a domain dictionary to classify
-  domains and previously visited domains (use `classify_domains()`)
-- url dummy variables: add a dummy variable if a URL falls into a
-  category or not (e.g. political website) (use `create_urldummy()`)
-- panelist data: add e.g. survey data to the webtrack data (use
-  `add_panelist_data()`)
+## Summarizing and aggregating
 
-A typical workflow looks like this:
+- `deduplicate()` flags or drops (as defined by argument `method`)
+  consecutive visits to the same URL within a user-defined time frame
+  (as set by argument `within`). Alternatively to dropping or flagging
+  visits, the function aggregates the durations of such duplicate
+  visits.
+- `sum_visits()` and `sum_durations()` aggregate the number or the
+  durations of visits, by participant and by a time period (as set by
+  argument `timeframe`). Optionally, the function aggregates the number
+  / duration of visits to a certain class of visits.
+- `sum_activity()` counts the number of active time periods (defined by
+  `timeframe`) by participant.
+
+## Example code
+
+A typical workflow including preprocessing, classifying and aggregating
+web tracking data looks like this (using the in-built example data):
 
 ``` r
-# load webtrack data as data.table
-library(data.table)
 library(webtrackR)
 
-# webtrack data
-wt <- fread("<path/to/file>")
+# load example data and turn it into wt_dt
+data("testdt_tracking")
+wt <- as.wt_dt(testdt_tracking)
 
-# domain dictionary (there is also an inbuilt dictionary)
-domain_dict <- fread("<path/to/file>")
-
-# dummy file (should just be a vecor of urls)
-political_urls <- c("...")
-
-# survey data
-survey <- fread("<path/to/file>")
-
-# convert to wt_dt object
-wt <- as.wt_dt(wt)
-
+# add duration
 wt <- add_duration(wt)
+
+# extract domains
 wt <- extract_domain(wt)
 
-# classify domains and only return rows with type news
-wt <- classify_domains(wt, domain_classes = domain_dict, return.only = "news")
+# drop duplicates (consecutive visits to the same URL within one second)
+wt <- deduplicate(wt, within = 1, method = "drop")
 
-# create a dummy variable for political news
-wt <- create_urldummy(wt, dummy = political_urls, name = "political")
+# load example domain classification and classify domains
+data("domain_list")
+wt <- classify_visits(wt, classes = domain_list, match_by = "domain")
 
-# add survey data
-wt <- add_panelist_data(wt, data = survey)
+# load example survey data and join with web tracking data
+data("testdt_survey_w")
+wt <- add_panelist_data(wt, testdt_survey_w)
+
+# aggregate number of visits by day and panelist, and by domain class
+wt_summ <- sum_visits(wt, timeframe = "date", visit_class = "type")
 ```
 
 ## Analysis
 
-### Ideology
-
-Top 500 Bakshy scores are available in the package
-
-``` r
-data("bakshy")
-```
-
-### Audience Networks
-
-Create audiences network
+The package also contains functions for the analysis of web tracking
+data. One example is the analysis of audience networks (Mangold &
+Scharkow, [2020](https://doi.org/10.1080/19312458.2020.1724274)). More
+functionalities will be added in later versions of the package.
 
 ``` r
 audience_network(wt, cutoff = 3, type = "pmi")
 ```
 
-- `cutoff` indicates minimal duration to count as visit.
+- `cutoff` indicates the minimal duration needed to count a URL as a
+  website visit.
 - `type` can be one of “pmi”, “phi”, “disparity”, “sdsm”, or “fdsm”
+
+<!-- ### Ideology
+&#10;Top 500 Bakshy scores are available in the package
+&#10;``` r
+data("bakshy")
+``` -->
