@@ -4,11 +4,12 @@
 \alias{wt_dt}
 \alias{as.wt_dt}
 \alias{is.wt_dt}
-\title{An S3 class, based on \link{data.table}, to store web tracking data}
+\title{An S3 class to store web tracking data}
 \usage{
 as.wt_dt(
   x,
   timestamp_format = "\%Y-\%m-\%d \%H:\%M:\%OS",
+  tz = "UTC",
   varnames = c(panelist_id = "panelist_id", url = "url", timestamp = "timestamp")
 )
 
@@ -21,6 +22,8 @@ panelist's ID, visit URL and visit timestamp.}
 \item{timestamp_format}{string. Specifies the raw timestamp's formatting.
 Defaults to \code{"\%Y-\%m-\%d \%H:\%M:\%OS"}.}
 
+\item{tz}{timezone of date. defaults to UTC}
+
 \item{varnames}{Named vector of column names, which contain the panelist's ID
 (\code{panelist_id}), the visit's URL (\code{url}) and the visit's timestamp (\code{timestamp}).}
 }
@@ -31,23 +34,15 @@ and \code{timestamp}
 logical. TRUE if x is a webtrack data object and FALSE otherwise
 }
 \description{
-An S3 class, based on \link{data.table}, to store web tracking data
+An S3 class to store web tracking data
 
 Convert a data.frame containing web tracking data to a \code{wt_dt} object
 }
 \details{
-A \code{wt_dt} table is a \link{data.table}.
-Therefore, it can be used by any function that would work on a \link{data.frame} or a \link{data.table}.
-Most of the operation such as variable creation, subsetting and joins are inherited from the \link{data.table}
-\verb{[]} operator, following the convention \code{DT[i,j,by]} (see data table package for detail).
+A \code{wt_dt} table is a data.frame.
 }
 \examples{
 data("testdt_tracking")
 wt <- as.wt_dt(testdt_tracking)
 is.wt_dt(wt)
-}
-\seealso{
-\itemize{
-\item \link{data.table} -- on which \code{wt_dt} is based
-}
 }
