@@ -1,7 +1,7 @@
-e3ae0c3e4fa939f52cd38f58c5047d2e *DESCRIPTION
+98d03c44b72b794aa28b81d43a4c5446 *DESCRIPTION
 4239c511ce9db6096f59e130ef51a39d *LICENSE
 31948ee7252beaff120fff06ddc0899c *NAMESPACE
-53ce0809a62f45f04fe943b7842111ee *NEWS.md
+39ccb89ef70df70d376aee52bf6f4b56 *NEWS.md
 a2e2bf3cf44326ce4d35cc63ee27474d *R/classify.R
 827ef1dd91b162aaa6151dbbc4dc8abb *R/data.R
 c41faa3cf8732529660cade700621a7a *R/globals.R
@@ -63,7 +63,7 @@ ac12bd347de8b7e9d6d481d31303444c *man/wt_dt.Rd
 4dc94c0c9a471c9fc6198f8e4dde552a *tests/testthat.R
 d2e0e211f4d83f04a6d8955b31269c2a *tests/testthat/test-classify.R
 479a9814d473748b6c151a203f555c76 *tests/testthat/test-indices.R
-566ebe17430d0240c6880bad749fd0a2 *tests/testthat/test-preprocess.R
+3e2bb3ba372651cd376484f8f3780823 *tests/testthat/test-preprocess.R
 7c5e1cb65261745ffc93a21671fe0846 *tests/testthat/test-summarize.R
 b5e3b09cab91f878bfdb2ed0b182d46b *tests/testthat/test-wt_dt.R
 06ef4add55777526b3718104f8799716 *vignettes/webtrackR.Rmd
